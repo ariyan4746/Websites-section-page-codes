@@ -1,0 +1,570 @@
+<!-- ===========================================================
+     ILMSEEDS — PREMIUM LIVE SEARCH BAR (Daraz-style)
+     Paste into: Header Builder → Widget (Custom HTML)
+     Features: live product + article suggestions with images & prices,
+     typo-tolerant ("thristy bird" → Thirsty Bird), keyboard navigation,
+     mobile responsive, Astra-proof styling.
+     =========================================================== -->
+<div class="ilms" id="ilms-root">
+  <form class="ilms-form" role="search" method="get" action="/" id="ilms-form" autocomplete="off">
+    <input type="hidden" name="post_type" value="product" />
+    <div class="ilms-box">
+      <input
+        type="search"
+        name="s"
+        id="ilms-input"
+        class="ilms-input"
+        placeholder="Search books, curricula or topics..."
+        aria-label="Search"
+        aria-autocomplete="list"
+        aria-controls="ilms-panel"
+        aria-expanded="false"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        enterkeyhint="search"
+      />
+      <button type="button" id="ilms-clear" class="ilms-clear" aria-label="Clear search" hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <button type="submit" class="ilms-btn" aria-label="Search">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="M21 21l-4.6-4.6"/></svg>
+      </button>
+    </div>
+    <div class="ilms-panel" id="ilms-panel" role="listbox" hidden></div>
+  </form>
+</div>
+
+<style>
+/* ---------- Layout ---------- */
+.ilms, .ilms * { box-sizing: border-box !important; }
+/* Breaks out of the narrow header column and centers itself on the page */
+.ilms {
+  width: min(840px, 92vw) !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 14px 0 !important;
+  position: relative !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  font-family: inherit !important;
+}
+.ilms-form { position: relative !important; margin: 0 !important; width: 100% !important; }
+
+.ilms-box {
+  display: flex !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  height: 48px !important;
+  background: #fff !important;
+  border: 1.5px solid #E5DFD5 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 10px rgba(35,35,33,.05) !important;
+  transition: border-color .2s, box-shadow .2s !important;
+}
+.ilms-box:focus-within {
+  border-color: #144E28 !important;
+  box-shadow: 0 6px 22px rgba(20,78,40,.14) !important;
+}
+
+/* Input (beats Astra's input styles) */
+.ilms .ilms-input,
+.ilms input.ilms-input[type="search"] {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 14px 0 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-size: 15px !important;
+  line-height: 48px !important;
+  color: #232321 !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+.ilms .ilms-input::placeholder { color: #9C9A93 !important; opacity: 1 !important; }
+.ilms .ilms-input::-webkit-search-cancel-button,
+.ilms .ilms-input::-webkit-search-decoration { -webkit-appearance: none !important; display: none !important; }
+
+/* Clear button */
+.ilms .ilms-clear {
+  flex: 0 0 auto !important;
+  width: 36px !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #9C9A93 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+.ilms .ilms-clear[hidden] { display: none !important; }
+.ilms .ilms-clear:hover { color: #232321 !important; background: transparent !important; }
+
+/* Search button (beats Astra's button styles) */
+.ilms button.ilms-btn,
+.ilms .ilms-form .ilms-btn {
+  flex: 0 0 auto !important;
+  width: 58px !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #144E28 !important;
+  color: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transition: background .2s !important;
+}
+.ilms button.ilms-btn:hover,
+.ilms button.ilms-btn:focus-visible { background: #0E371C !important; color: #fff !important; }
+.ilms button.ilms-btn svg { stroke: #fff !important; }
+
+/* ---------- Suggestions panel ---------- */
+.ilms .ilms-panel {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 999999 !important;
+  background: #fff !important;
+  border: 1px solid #EAE4DA !important;
+  border-radius: 14px !important;
+  box-shadow: 0 18px 44px rgba(35,35,33,.14) !important;
+  max-height: min(70vh, 520px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding: 6px 0 !important;
+  text-align: left !important;
+}
+.ilms .ilms-panel[hidden] { display: none !important; }
+
+.ilms .ilms-head {
+  padding: 10px 16px 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  color: #8A8780 !important;
+}
+.ilms .ilms-note {
+  margin: 4px 12px 2px !important;
+  padding: 9px 12px !important;
+  background: #F6F1E8 !important;
+  border-radius: 8px !important;
+  font-size: 12.5px !important;
+  color: #55534E !important;
+}
+
+.ilms a.ilms-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 9px 16px !important;
+  text-decoration: none !important;
+  color: #232321 !important;
+  border: 0 !important;
+  transition: background .12s !important;
+}
+.ilms a.ilms-item:hover,
+.ilms a.ilms-item.is-active { background: #F5F1EA !important; }
+
+.ilms .ilms-thumb {
+  flex: 0 0 48px !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 8px !important;
+  background: #F2ECE4 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #144E28 !important;
+}
+.ilms .ilms-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  display: block !important;
+}
+.ilms .ilms-info { flex: 1 1 auto !important; min-width: 0 !important; display: flex !important; flex-direction: column !important; gap: 2px !important; }
+.ilms .ilms-title {
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  color: #232321 !important;
+  overflow: hidden !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+.ilms .ilms-title mark { background: transparent !important; color: #144E28 !important; font-weight: 800 !important; padding: 0 !important; }
+.ilms .ilms-price { font-size: 13px !important; font-weight: 700 !important; color: #144E28 !important; }
+.ilms .ilms-price del { color: #9C9A93 !important; font-weight: 500 !important; margin-left: 6px !important; font-size: 12px !important; }
+.ilms .ilms-meta { font-size: 12px !important; color: #8A8780 !important; }
+.ilms .ilms-arrow { flex: 0 0 auto !important; color: #C8C3B8 !important; }
+
+.ilms a.ilms-all {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin: 6px 12px 6px !important;
+  padding: 11px !important;
+  border-radius: 10px !important;
+  background: #144E28 !important;
+  color: #fff !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+.ilms a.ilms-all:hover, .ilms a.ilms-all.is-active { background: #0E371C !important; color: #fff !important; }
+
+.ilms .ilms-empty { padding: 22px 18px !important; text-align: center !important; color: #6E6D68 !important; font-size: 14px !important; }
+.ilms .ilms-loading { padding: 18px !important; text-align: center !important; color: #8A8780 !important; font-size: 13.5px !important; }
+.ilms .ilms-spin {
+  display: inline-block !important; width: 14px !important; height: 14px !important; margin-right: 8px !important;
+  border: 2px solid #D8D2C6 !important; border-top-color: #144E28 !important; border-radius: 50% !important;
+  vertical-align: -2px !important; animation: ilmsSpin .7s linear infinite !important;
+}
+@keyframes ilmsSpin { to { transform: rotate(360deg); } }
+
+/* ---------- Desktop / large screens ---------- */
+@media (min-width: 681px) {
+  .ilms-box { height: 58px !important; border-radius: 14px !important; border-width: 2px !important; }
+  .ilms .ilms-input, .ilms input.ilms-input[type="search"] {
+    font-size: 17px !important;
+    line-height: 58px !important;
+    padding-left: 22px !important;
+  }
+  .ilms .ilms-clear { width: 44px !important; }
+  .ilms button.ilms-btn { width: 76px !important; }
+  .ilms button.ilms-btn svg { width: 24px !important; height: 24px !important; }
+  .ilms .ilms-panel { top: calc(100% + 6px) !important; border-radius: 16px !important; max-height: min(72vh, 560px) !important; }
+  .ilms .ilms-head { padding: 14px 22px 8px !important; font-size: 12px !important; }
+  .ilms a.ilms-item { padding: 11px 22px !important; gap: 16px !important; }
+  .ilms .ilms-thumb { flex-basis: 58px !important; width: 58px !important; height: 58px !important; border-radius: 10px !important; }
+  .ilms .ilms-title { font-size: 16px !important; }
+  .ilms .ilms-price { font-size: 14.5px !important; }
+  .ilms a.ilms-all { margin: 8px 16px 10px !important; padding: 14px !important; font-size: 15px !important; }
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 680px) {
+  .ilms { width: calc(100vw - 24px) !important; padding: 8px 0 !important; }
+  .ilms-box { height: 46px !important; border-radius: 10px !important; }
+  .ilms .ilms-input, .ilms input.ilms-input[type="search"] {
+    font-size: 16px !important; /* prevents iOS zoom on focus */
+    line-height: 46px !important;
+    padding-left: 14px !important;
+  }
+  .ilms button.ilms-btn { width: 52px !important; }
+  .ilms .ilms-panel { max-height: 65vh !important; border-radius: 12px !important; }
+  .ilms .ilms-thumb { flex-basis: 44px !important; width: 44px !important; height: 44px !important; }
+  .ilms a.ilms-item { padding: 9px 12px !important; }
+}
+</style>
+
+<script>
+(function () {
+  var root = document.getElementById('ilms-root');
+  if (!root || root.getAttribute('data-ready')) return;
+  root.setAttribute('data-ready', '1');
+
+  var form = document.getElementById('ilms-form');
+  var input = document.getElementById('ilms-input');
+  var clearBtn = document.getElementById('ilms-clear');
+  var panel = document.getElementById('ilms-panel');
+
+  var debounce = null, controller = null, reqId = 0, activeIdx = -1;
+  var cache = {};
+  var catalogPromise = null;
+
+  /* ---------- helpers ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function decode(s) {
+    var t = document.createElement('textarea');
+    t.innerHTML = s || '';
+    return t.value;
+  }
+  function norm(s) { return decode(s).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim(); }
+  function getJson(url, signal) {
+    return fetch(url, { signal: signal, credentials: 'same-origin' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+  function highlight(title, q) {
+    var safe = esc(title);
+    var tokens = norm(q).split(' ').filter(function (t) { return t.length > 1; });
+    tokens.forEach(function (t) {
+      var re = new RegExp('(' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+      safe = safe.replace(re, '<mark>$1</mark>');
+    });
+    return safe;
+  }
+  function money(minor, p) {
+    var d = parseInt(p.currency_minor_unit, 10);
+    if (isNaN(d)) d = 2;
+    var n = (parseInt(minor, 10) / Math.pow(10, d)).toFixed(d);
+    n = n.replace(/\B(?=(\d{3})+(?!\d))/g, p.currency_thousand_separator || ',');
+    return (p.currency_prefix || p.currency_symbol || '') + n + (p.currency_suffix || '');
+  }
+
+  /* ---------- normalise results ---------- */
+  function fromProduct(p) {
+    var pr = p.prices || {};
+    var priceHtml = '';
+    if (pr.price !== undefined && pr.price !== '') {
+      if (p.on_sale && pr.regular_price && pr.regular_price !== pr.price) {
+        priceHtml = esc(money(pr.price, pr)) + '<del>' + esc(money(pr.regular_price, pr)) + '</del>';
+      } else {
+        priceHtml = esc(money(pr.price, pr));
+      }
+    }
+    return {
+      type: 'product', id: 'p' + p.id, title: decode(p.name), url: p.permalink,
+      img: p.images && p.images[0] ? (p.images[0].thumbnail || p.images[0].src) : '',
+      priceHtml: priceHtml
+    };
+  }
+  function fromPost(p) {
+    return { type: 'post', id: 'a' + p.id, title: decode(p.title && p.title.rendered), url: p.link };
+  }
+
+  /* ---------- catalogue for typo tolerance (loaded once) ---------- */
+  function loadCatalog() {
+    if (catalogPromise) return catalogPromise;
+    catalogPromise = Promise.all([
+      getJson('/wp-json/wc/store/v1/products?per_page=100').then(function (a) { return a.map(fromProduct); }).catch(function () { return []; }),
+      getJson('/wp-json/wp/v2/posts?per_page=100&_fields=id,title,link').then(function (a) { return a.map(fromPost); }).catch(function () { return []; })
+    ]).then(function (r) {
+      var all = r[0].concat(r[1]);
+      all.forEach(function (it) { it._n = norm(it.title); it._w = it._n.split(' '); });
+      return all;
+    });
+    return catalogPromise;
+  }
+
+  function lev(a, b) {
+    if (a === b) return 0;
+    var m = a.length, n = b.length;
+    if (!m) return n; if (!n) return m;
+    var prev = [], cur = [], i, j;
+    for (j = 0; j <= n; j++) prev[j] = j;
+    for (i = 1; i <= m; i++) {
+      cur[0] = i;
+      for (j = 1; j <= n; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+      }
+      var tmp = prev; prev = cur; cur = tmp;
+    }
+    return prev[n];
+  }
+
+  function fuzzyScore(item, tokens) {
+    var total = 0;
+    for (var i = 0; i < tokens.length; i++) {
+      var t = tokens[i], best = 99;
+      if (item._n.indexOf(t) !== -1) { best = 0; }
+      else {
+        var maxD = t.length <= 3 ? 0 : (t.length <= 6 ? 1 : 2);
+        for (var k = 0; k < item._w.length; k++) {
+          var w = item._w[k];
+          if (w.indexOf(t) === 0) { best = Math.min(best, 0.5); continue; }
+          var d = lev(t, w.length > t.length + 1 ? w.slice(0, t.length + 1) : w);
+          if (d <= maxD) best = Math.min(best, d);
+        }
+      }
+      if (best === 99) return null;
+      total += best;
+    }
+    return total;
+  }
+
+  function fuzzySearch(q, list) {
+    var tokens = norm(q).split(' ').filter(Boolean);
+    if (!tokens.length || norm(q).length < 3) return [];
+    var out = [];
+    list.forEach(function (it) {
+      var s = fuzzyScore(it, tokens);
+      if (s !== null) out.push({ it: it, s: s });
+    });
+    out.sort(function (a, b) { return a.s - b.s; });
+    return out.map(function (o) { return o.it; });
+  }
+
+  /* ---------- search ---------- */
+  function remoteSearch(q, signal) {
+    var enc = encodeURIComponent(q);
+    return Promise.all([
+      getJson('/wp-json/wc/store/v1/products?per_page=6&search=' + enc, signal).then(function (a) { return a.map(fromProduct); }).catch(function (e) { if (e.name === 'AbortError') throw e; return []; }),
+      getJson('/wp-json/wp/v2/posts?per_page=3&_fields=id,title,link&search=' + enc, signal).then(function (a) { return a.map(fromPost); }).catch(function (e) { if (e.name === 'AbortError') throw e; return []; })
+    ]);
+  }
+
+  function dedupe(arr, existing) {
+    var seen = {};
+    (existing || []).forEach(function (x) { seen[x.id] = 1; });
+    return arr.filter(function (x) { if (seen[x.id]) return false; seen[x.id] = 1; return true; });
+  }
+
+  function run(q) {
+    q = q.trim();
+    if (q.length < 2) { closePanel(); return; }
+    if (cache[q]) { render(q, cache[q]); return; }
+
+    if (controller) controller.abort();
+    controller = (window.AbortController ? new AbortController() : null);
+    var my = ++reqId;
+
+    showLoading();
+
+    Promise.all([remoteSearch(q, controller && controller.signal), loadCatalog()]).then(function (res) {
+      if (my !== reqId) return;
+      var products = res[0][0], posts = res[0][1], catalog = res[1];
+      var fuzzyUsed = false;
+
+      if (products.length < 3 || posts.length < 1) {
+        var fz = fuzzySearch(q, catalog);
+        var fzP = dedupe(fz.filter(function (x) { return x.type === 'product'; }), products);
+        var fzA = dedupe(fz.filter(function (x) { return x.type === 'post'; }), posts);
+        if (products.length < 3 && fzP.length) { products = products.concat(fzP).slice(0, 6); fuzzyUsed = !res[0][0].length; }
+        if (!posts.length && fzA.length) { posts = fzA.slice(0, 3); fuzzyUsed = fuzzyUsed || !res[0][1].length && !res[0][0].length; }
+      }
+      var data = { products: products, posts: posts, fuzzy: fuzzyUsed && !res[0][0].length && !res[0][1].length };
+      cache[q] = data;
+      render(q, data);
+    }).catch(function (e) {
+      if (e && e.name === 'AbortError') return;
+      closePanel();
+    });
+  }
+
+  /* ---------- render ---------- */
+  var ICON_DOC = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+  var ICON_BOOK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>';
+  var ICON_ARROW = '<svg class="ilms-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+
+  function itemHtml(it, q) {
+    var thumb = it.type === 'product'
+      ? (it.img ? '<img src="' + esc(it.img) + '" alt="" loading="lazy" />' : ICON_BOOK)
+      : ICON_DOC;
+    var sub = it.type === 'product'
+      ? (it.priceHtml ? '<span class="ilms-price">' + it.priceHtml + '</span>' : '')
+      : '<span class="ilms-meta">Article</span>';
+    return '<a class="ilms-item" role="option" href="' + esc(it.url) + '">' +
+      '<span class="ilms-thumb">' + thumb + '</span>' +
+      '<span class="ilms-info"><span class="ilms-title">' + highlight(it.title, q) + '</span>' + sub + '</span>' +
+      ICON_ARROW + '</a>';
+  }
+
+  function searchUrl(q) {
+    return '/?s=' + encodeURIComponent(q) + '&post_type=product';
+  }
+
+  function render(q, d) {
+    var html = '';
+    if (!d.products.length && !d.posts.length) {
+      html = '<div class="ilms-empty">No results for “' + esc(q) + '”.<br>Try a different word, e.g. “Bird”, “Wallet” or “Grade”.</div>';
+    } else {
+      if (d.fuzzy) html += '<div class="ilms-note">Showing closest matches for “' + esc(q) + '”</div>';
+      if (d.products.length) {
+        html += '<div class="ilms-head">Books &amp; Store</div>';
+        d.products.forEach(function (it) { html += itemHtml(it, q); });
+      }
+      if (d.posts.length) {
+        html += '<div class="ilms-head">Articles</div>';
+        d.posts.forEach(function (it) { html += itemHtml(it, q); });
+      }
+      html += '<a class="ilms-all" href="' + esc(searchUrl(q)) + '">See all results for “' + esc(q) + '” &rarr;</a>';
+    }
+    panel.innerHTML = html;
+    openPanel();
+  }
+
+  function showLoading() {
+    if (panel.hidden) {
+      panel.innerHTML = '<div class="ilms-loading"><span class="ilms-spin"></span>Searching…</div>';
+      openPanel();
+    }
+  }
+
+  function openPanel() { panel.hidden = false; input.setAttribute('aria-expanded', 'true'); activeIdx = -1; }
+  function closePanel() { panel.hidden = true; input.setAttribute('aria-expanded', 'false'); activeIdx = -1; }
+
+  /* ---------- keyboard ---------- */
+  function setActive(i) {
+    var items = panel.querySelectorAll('a.ilms-item, a.ilms-all');
+    if (!items.length) return;
+    if (i < 0) i = items.length - 1;
+    if (i >= items.length) i = 0;
+    for (var k = 0; k < items.length; k++) items[k].classList.remove('is-active');
+    items[i].classList.add('is-active');
+    items[i].scrollIntoView({ block: 'nearest' });
+    activeIdx = i;
+  }
+
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (!panel.hidden) setActive(activeIdx + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (!panel.hidden) setActive(activeIdx - 1); }
+    else if (e.key === 'Escape') { closePanel(); }
+    else if (e.key === 'Enter' && activeIdx > -1) {
+      var items = panel.querySelectorAll('a.ilms-item, a.ilms-all');
+      if (items[activeIdx]) { e.preventDefault(); window.location.href = items[activeIdx].href; }
+    }
+  });
+
+  /* ---------- events ---------- */
+  input.addEventListener('input', function () {
+    var v = input.value;
+    clearBtn.hidden = !v.length;
+    clearTimeout(debounce);
+    if (v.trim().length < 2) { if (controller) controller.abort(); reqId++; closePanel(); return; }
+    debounce = setTimeout(function () { run(v); }, 220);
+  });
+
+  input.addEventListener('focus', function () {
+    loadCatalog(); // warm up for typo-tolerance
+    if (input.value.trim().length >= 2 && panel.innerHTML) openPanel();
+  });
+
+  clearBtn.addEventListener('click', function () {
+    input.value = '';
+    clearBtn.hidden = true;
+    closePanel();
+    input.focus();
+  });
+
+  form.addEventListener('submit', function (e) {
+    if (!input.value.trim()) { e.preventDefault(); input.focus(); }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!root.contains(e.target)) closePanel();
+  });
+})();
+</script>
