@@ -38,15 +38,14 @@
 <style>
 /* ---------- Layout ---------- */
 .ilms, .ilms * { box-sizing: border-box !important; }
-/* Breaks out of the narrow header column and centers itself on the page */
+/* Base size. The script below measures the header column and centers
+   the bar exactly in the screen (works for any column / phone width). */
 .ilms {
-  width: min(840px, 92vw) !important;
+  width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
   padding: 14px 0 !important;
   position: relative !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
   font-family: inherit !important;
 }
 .ilms-form { position: relative !important; margin: 0 !important; width: 100% !important; }
@@ -270,17 +269,28 @@
 
 /* ---------- Mobile ---------- */
 @media (max-width: 680px) {
-  .ilms { width: calc(100vw - 24px) !important; padding: 8px 0 !important; }
-  .ilms-box { height: 46px !important; border-radius: 10px !important; }
+  .ilms { padding: 8px 0 !important; }
+  .ilms-box { height: 42px !important; border-radius: 10px !important; border-width: 1px !important; box-shadow: 0 1px 6px rgba(35,35,33,.06) !important; }
   .ilms .ilms-input, .ilms input.ilms-input[type="search"] {
-    font-size: 16px !important; /* prevents iOS zoom on focus */
-    line-height: 46px !important;
-    padding-left: 14px !important;
+    font-size: 16px !important; /* keeps iOS from zooming on focus */
+    line-height: 40px !important;
+    padding: 0 8px 0 12px !important;
   }
-  .ilms button.ilms-btn { width: 52px !important; }
-  .ilms .ilms-panel { max-height: 65vh !important; border-radius: 12px !important; }
-  .ilms .ilms-thumb { flex-basis: 44px !important; width: 44px !important; height: 44px !important; }
-  .ilms a.ilms-item { padding: 9px 12px !important; }
+  .ilms .ilms-input::placeholder { font-size: 14px !important; }
+  .ilms .ilms-clear { width: 30px !important; }
+  .ilms .ilms-clear svg { width: 14px !important; height: 14px !important; }
+  .ilms button.ilms-btn { width: 46px !important; }
+  .ilms button.ilms-btn svg { width: 18px !important; height: 18px !important; }
+  .ilms .ilms-panel { top: calc(100% + 6px) !important; max-height: 60vh !important; border-radius: 12px !important; }
+  .ilms .ilms-head { padding: 9px 12px 4px !important; font-size: 10.5px !important; }
+  .ilms a.ilms-item { padding: 8px 12px !important; gap: 10px !important; }
+  .ilms .ilms-thumb { flex-basis: 40px !important; width: 40px !important; height: 40px !important; border-radius: 7px !important; }
+  .ilms .ilms-title { font-size: 13.5px !important; }
+  .ilms .ilms-price { font-size: 12.5px !important; }
+  .ilms .ilms-meta { font-size: 11.5px !important; }
+  .ilms .ilms-arrow { display: none !important; }
+  .ilms .ilms-note { font-size: 12px !important; margin: 4px 10px 2px !important; }
+  .ilms a.ilms-all { margin: 6px 10px 8px !important; padding: 10px !important; font-size: 13px !important; }
 }
 </style>
 
@@ -566,5 +576,25 @@
   document.addEventListener('click', function (e) {
     if (!root.contains(e.target)) closePanel();
   });
+
+  /* ---------- sizing & centering (works in any header column) ---------- */
+  function layout() {
+    var vw = document.documentElement.clientWidth;
+    var mobile = vw <= 680;
+    var w = mobile ? vw - 32 : Math.min(840, Math.round(vw * 0.92));
+    root.style.setProperty('transform', 'none', 'important');
+    root.style.setProperty('left', '0', 'important');
+    root.style.setProperty('width', w + 'px', 'important');
+    var rect = root.getBoundingClientRect();
+    var shift = Math.round((vw - w) / 2 - rect.left);
+    root.style.setProperty('transform', 'translateX(' + shift + 'px)', 'important');
+    input.placeholder = mobile ? 'Search books & topics…' : 'Search books, curricula or topics...';
+  }
+  layout();
+  window.addEventListener('resize', layout);
+  window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
+  window.addEventListener('load', layout);
+  setTimeout(layout, 400);
+  setTimeout(layout, 1500);
 })();
 </script>
